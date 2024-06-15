@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FBI System</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <h1>&#128374; FBI System &#128374;</h1>
+    <div class="card bg-dark text-center">
+      <div class="card-body">
+        <form id="loginForm">
+          <h1>&#128372;&#128372;&#128372;</h1>
+          <h5 class="card-title text-center">Ingrese sus credenciales</h5>
+          <div class="row d-flex align-items-center mb-1">
+            <div class="col-12">Email:</div>
+            <div class="col-7 m-auto">
+              <input type="text" id="email" name="email" class="form-control" />
+            </div>
+          </div>
+          <div class="row d-flex align-items-center">
+            <div class="col-12">Password:</div>
+            <div class="col-7 m-auto">
+              <input type="password" id="password" name="password" class="form-control" />
+            </div>
+          </div>
+          <button type="submit" class="btn bg-light my-3">Ingresar &#128373;</button>
+        </form>
+        <div id="message"></div>
+      </div>
+    </div>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: black;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        height: 60vh;
+      }
+    </style>
+
+    <script>
+      document.getElementById('loginForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        const response = await fetch('/SignIn', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({ email, password }),
+        });
+
+        const messageDiv = document.getElementById('message');
+        if (response.ok) {
+          const html = await response.text();
+          messageDiv.innerHTML = html;
+
+          const token = html.match(/sessionStorage.setItem\('token', '([^']+)'/)[1];
+          sessionStorage.setItem('token', token);
+
+          // Agregar el evento click al enlace restringido después de iniciar sesión
+          document.querySelector('a[href="/restricted"]').addEventListener('click', function(event) {
+            event.preventDefault();
+            fetchRestrictedContent();
+          });
+        } else {
+          const errorMessage = await response.text();
+          messageDiv.innerHTML = errorMessage;
+        }
+      });
+
+      async function fetchRestrictedContent() {
+        const token = sessionStorage.getItem('token');
+
+        const response = await fetch('/restricted', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        const content = await response.text();
+        document.body.innerHTML = content;
+      }
+    </script>
+  </body>
+</html>
